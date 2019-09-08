@@ -66,9 +66,11 @@ module.exports = {
       };
 
       try {
+        // create the user- register the user in the database.
         const newUser = await User.create(user);
+        // use the details of the createdUser to sign the jwt which will be sent in the response.
         const token = jwt.sign({ data: newUser }, config.jsonSecret, {
-          expiresIn: "120"
+          expiresIn: "5h"
         });
         res.cookie("auth", token);
         return res
@@ -94,5 +96,66 @@ module.exports = {
       //     });
       //   });
     });
+  },
+
+  async login(req, res) {
+    // check if req.body is empty or req.email is empty
+    if (!req.body.email || !req.body.password)
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: "No empty strings allowed!"
+      });
+
+    //
+    try {
+      const foundUser = await User.findOne({
+        email: helpers.convertToLowerCase(req.body.email)
+      });
+      if (!foundUser) {
+        console.log("i am in line 112 and the user is", foundUser);
+        return res.status(httpStatusCodes.NOT_FOUND).json({
+          message: "Wrong email or password!"
+        });
+      }
+      const match = await bcrypt.compare(req.body.password, foundUser.password);
+      if (!match) {
+        return res.status(httpStatusCodes.NOT_ACCEPTABLE).json({
+          message: "Wrong Email or password!"
+        });
+      }
+
+      const token = jwt.sign({ data: foundUser }, config.jsonSecret, {
+        expiresIn: "2h"
+      });
+      res.cookie("auth", token);
+      return res.status(httpStatusCodes.OK).json({
+        message: "Login Successful",
+        foundUser,
+        token
+      });
+
+      // bcrypt
+      //   .compare(req.body.password, foundUser.password)
+      //   .then(match => {
+      //     console.log(match);
+      //     const token = jwt.sign({ data: foundUser }, config.jsonSecret, {
+      //       expiresIn: "2h"
+      //     });
+      //     res.cookie("auth", token);
+      //     return res.send(httpStatusCodes.OK).json({
+      //       message: "Login Successful",
+      //       foundUser,
+      //       token
+      //     });
+      //   })
+      //   .catch(e => {
+      //     return res.send(httpStatusCodes.NOT_FOUND).json({
+      //       message: "Wrong Email or password!"
+      //     });
+      //   });
+    } catch (e) {
+      return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: "Oops, something went wrong. Please try again later!"
+      });
+    }
   }
 };

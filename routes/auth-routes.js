@@ -11,5 +11,6 @@ const authController = require("../controllers/auth-controller");
 // we are going to use post method on the router instance
 
 router.post("/register", authController.createUser);
+router.post("/login", authController.login);
 
 module.exports = router;

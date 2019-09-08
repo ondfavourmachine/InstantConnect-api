@@ -5,7 +5,16 @@ const mongoose = require("mongoose");
 const userSchema = mongoose.Schema({
   username: { type: String },
   email: { type: String },
-  password: { type: String }
+  password: { type: String },
+  post: [
+    {
+      // this part of the schema will run whenever
+      // a user creates a new post;
+      postId: { type: mongoose.Schema.Types.ObjectId, ref: "Posts" },
+      post: { type: String },
+      created: { type: Date, default: Date.now() }
+    }
+  ]
 });
 
 // export user schem
