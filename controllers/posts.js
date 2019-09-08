@@ -2,6 +2,7 @@
 const httpStatusCodes = require("http-status-codes");
 const Posts = require("../models/post-model");
 const Joi = require("@hapi/joi");
+const User = require("../models/user-Models");
 // const helpers = require("../Helpers/helpers");
 // const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
@@ -31,11 +32,27 @@ module.exports = {
 
     try {
       const newPost = await Posts.create(body);
+      console.log(newPost);
+      await User.update(
+        {
+          username: newPost.username
+        },
+        {
+          $push: {
+            post: {
+              postId: newPost._id,
+              post: newPost.post,
+              created: new Date()
+            }
+          }
+        }
+      );
       return res.status(httpStatusCodes.CREATED).json({
         message: "Post Created!",
         post: newPost
       });
     } catch (e) {
+      console.log(e);
       return res.status(httpStatusCodes.INTERNAL_SERVER_ERROR).json({
         message: "Could not create post",
         errorDetails: e
